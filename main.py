@@ -11,7 +11,7 @@ for i in range(1):
  path=os.getcwd()
  nowdate = datetime.datetime.now()
  filelog = True
- path = path+'/log/'+'log'
+ path = path+'log.log'
 
  logger = logging.getLogger('log')
  logger.setLevel(logging.DEBUG)
@@ -24,7 +24,7 @@ for i in range(1):
  # file log
  formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
  if filelog:
-     fh = TimedRotatingFileHandler(path,encoding='utf-8', when="midnight", interval=1)
+     #fh = TimedRotatingFileHandler(path,encoding='utf-8', when="midnight", interval=1)
 
      fh.suffix = "%Y-%m-%d.log"  
      fh.setLevel(logging.DEBUG)
