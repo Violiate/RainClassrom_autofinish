@@ -1,42 +1,16 @@
 import datetime,time
 from itertools import combinations
-import logging,os
+import os
 from logging.handlers import TimedRotatingFileHandler
 import sys
 import requests,json
+import sys
+from loguru import logger
 
-COOKIE=''   #使用前自行填写cookie和cookie里的csrftoken
-csrftoken=''  #自行填写
-for i in range(1):
- path=os.getcwd()
- nowdate = datetime.datetime.now()
- filelog = True
- path = path+'log.log'
-
- logger = logging.getLogger('log')
- logger.setLevel(logging.DEBUG)
-
- # 调用模块时,如果错误引用，比如多次调用，每次会添加Handler，造成重复日志，这边每次都移除掉所有的handler，后面在重新添加，可以解决这类问题
- while logger.hasHandlers():
-     for i in logger.handlers:
-         logger.removeHandler(i)
-
- # file log
- formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
- if filelog:
-     #fh = TimedRotatingFileHandler(path,encoding='utf-8', when="midnight", interval=1)
-
-     fh.suffix = "%Y-%m-%d.log"  
-     fh.setLevel(logging.DEBUG)
-     fh.setFormatter(formatter)
-     logger.addHandler(fh)
-
- # console log
- formatter = logging.Formatter('%(message)s')
- ch = logging.StreamHandler(sys.stdout)
- ch.setLevel(logging.INFO)
- ch.setFormatter(formatter)
- logger.addHandler(ch)
+COOKIE=''
+csrftoken=''
+words='通过学习本期的课程，我对产生了深刻的了解，以下是我的观点：1.'
+logger.add("loguru.log")
 
 if __name__=='__main__':
    
@@ -62,9 +36,9 @@ if __name__=='__main__':
       }
    get_lessonlist_url='https://www.yuketang.cn/v/course_meta/learning_list/'
    get_lessonlist=requests.get(url=get_lessonlist_url,headers=get_lessonlist_headers)
-   print("当出现课程是你要刷的，请输入1，否则输入0进行跳过")
+   logger.info("当出现课程是你要刷的，请输入1，否则输入0进行跳过")
    for lesson in get_lessonlist.json()['data']:
-      print("\n课程号："+str(lesson['classroom_id'])+"  课程名称："+lesson['course_name']+"  班级："+lesson['classroom_name'])
+      logger.info("\n课程号："+str(lesson['classroom_id'])+"  课程名称："+lesson['course_name']+"  班级："+lesson['classroom_name'])
       select=input("是否跳过？跳过输入0，确认输入1：")
       classroom_id=lesson['classroom_id']
       university_id=lesson['university_id']
@@ -97,7 +71,7 @@ if __name__=='__main__':
       for number in activity:
           time_struct = time.localtime(number['create_time'])    # 首先把时间戳转换为结构化时间
           time_format = time.strftime("%Y-%m-%d %H-%M-%S",time_struct)   
-          print("\n发布时间："+time_format+" 标题："+number['title'])
+          logger.info("\n发布时间："+time_format+" 标题："+number['title'])
           select=input("是否跳过？跳过输入0，确认输入1：")
           courseware_id=number['courseware_id']
           id=number['id']
@@ -136,7 +110,7 @@ if __name__=='__main__':
                leaf_title=leaf['title']
                leaf_id=leaf['id']
                leaf_title=leaf['title']
-               print('检测到视频！视频id：'+str(leaf_id)+'标题：'+str(leaf_title))
+               logger.info('检测到视频！视频id：'+str(leaf_id)+'标题：'+str(leaf_title))
                get_video_info_url='https://www.yuketang.cn/mooc-api/v1/lms/learn/leaf_info/'+str(classroom_id)+'/'+str(leaf_id)+'/'
                get_video_info_headers = {
                      'accept': 'application/json, text/plain, */*',
@@ -201,7 +175,7 @@ if __name__=='__main__':
                while sunci != 1:
                 for k in range(25):
                     time.sleep(0.6)
-                    print("当前进度：" + str(4 * (k + 1)) + "%")
+                    logger.info("当前进度：" + str(4 * (k + 1)) + "%")
                     heart_url = 'https://www.yuketang.cn/video-log/heartbeat/'
                     heart_data = '{"heart_data":[{"i":5,"et":"heartbeat","p":"web","n":"ali-cdn.xuetangx.com","lob":"ykt","cp":' + str(d * (1 + k) / 25) + ',"fp":100,"tp":100,"sp":5,"ts":"' + str(datetime + d * (1 + k) * 2500) + '","u":' + str(user_id) + ',"uip":"","c":' + str(course_id) + ',"v":' + str(leaf_id) + ',"skuid":' + str(sku_id) + ',"classroomid":"' +str(classroom_id)+ '","cc":"' + str(ccid)+ '","d":' + str(d) + ',"pg":"' + str(leaf_id) + '_x33v","sq":11,"t":"video","cards_id":0,"slide":0,"v_url":""}]}'
 
@@ -245,7 +219,7 @@ if __name__=='__main__':
 
             elif int(leaf['leaf_type'])==6:    #选择题部分，需要配合无限次提交答案使用
                leaf_id=leaf['id']
-               print('选择题部分，需要配合无限次提交答案使用！否则默认提交答案A，结束请输入1 继续输入0：')
+               logger.info('选择题部分，需要配合无限次提交答案使用！否则默认提交答案A，结束请输入1 继续输入0：')
                exit_judge=0
                if(exit_judge==1):
                   continue
@@ -345,18 +319,104 @@ if __name__=='__main__':
                              }  
                       submit_answer=requests.post(url=submit_answer_url,headers=submit_answer_headers,json=submit_answer_json_data)
                       if(str(choose_type)=='MultipleChoice'):
-                         print('多选题答案'+str(list(combination))+'正确？ '+str(submit_answer.json()['data']['is_correct'])+'提交时间：'+submit_answer.json()['data']['submit_time'])
+                         logger.info('多选题答案'+str(list(combination))+'正确？ '+str(submit_answer.json()['data']['is_correct'])+'提交时间：'+submit_answer.json()['data']['submit_time'])
                          time.sleep(6)   #不然会请求过快报错
                          if(submit_answer.json()['data']['is_correct']):
                          
                            break
                       else:
-                        print('单选答案'+str(list(combination))+'正确？ '+str(submit_answer.json()['data']['is_right'])+'提交时间：'+submit_answer.json()['data']['submit_time'])
+                        logger.info('单选答案'+str(list(combination))+'正确？ '+str(submit_answer.json()['data']['is_right'])+'提交时间：'+submit_answer.json()['data']['submit_time'])
                         time.sleep(6)   #不然会请求过快报错
                         if(submit_answer.json()['data']['is_right']):
                          
                           break
-                      
+            elif int(leaf['leaf_type'])==4:    #讨论题部分，需要配合无限次提交答案使用          
+               leaf_id=leaf['id']
+               title=leaf['title']
+               logger.info('检测到讨论题：'+title)
+               get_discuss_info_url='https://www.yuketang.cn/mooc-api/v1/lms/learn/leaf_info/'+str(classroom_id)+'/'+str(leaf_id)+'/'   #先获取skuid和userid
+               get_discuss_info_headers = {
+                     'accept': 'application/json, text/plain, */*',
+                    'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+                    'classroom-id':str(classroom_id),
+                    'cookie': COOKIE,
+                    'priority': 'u=1, i',
+                    'referer': 'https://www.yuketang.cn/bindmobile/video-student-unit/'+str(classroom_id)+'/'+str(leaf_id),
+                    'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'university-id': str(university_id),
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
+                    'uv-id': str(university_id),
+                    'xt-agent': 'web',
+                    'xtbz': 'ykt',
+                 
+                    }
+               get_discuss_info=requests.get(url=get_discuss_info_url,headers=get_discuss_info_headers)
+               user_id=get_discuss_info.json()['data']['user_id']
+               sku_id=get_discuss_info.json()['data']['sku_id']
+               leaf_type_id=get_discuss_info.json()['data']['content_info']['leaf_type_id']
+               course_id=get_discuss_info.json()['data']['course_id']
+               get_discuss_id_headers = {
+                     'accept': 'application/json, text/plain, */*',
+                     'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+                     'classroom-id': '19627267',
+                     'cookie':COOKIE,                      
+                     'priority': 'u=1, i',
+                     'referer': 'https://www.yuketang.cn/bindmobile/student/forum/19627267/9514161/46501758',
+                     'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                     'sec-ch-ua-mobile': '?0',
+                     'sec-ch-ua-platform': '"Windows"',
+                     'sec-fetch-dest': 'empty',
+                     'sec-fetch-mode': 'cors',
+                     'sec-fetch-site': 'same-origin',
+                     'university-id': str(university_id),
+                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
+                     'uv-id': str(university_id),
+                     'xt-agent': 'web',
+                     'xtbz': 'ykt',
+                                        }
+               get_discuss_id_url='https://www.yuketang.cn/v/discussion/v2/unit/discussion/?classroom_id='+str(classroom_id)+'&sku_id='+str(sku_id)+'&leaf_id='+str(leaf_id)+'&channel=xt'
+               get_discuss_id=requests.get(url=get_discuss_id_url,headers=get_discuss_id_headers)  #获取讨论题id
+               chapter_id=get_discuss_id.json()['data']['chapter_id']
+               discuss_id=get_discuss_id.json()['data']['id']
+               user_id=get_discuss_id.json()['data']['user_id']
+               submit_discussion_headers = {
+                      'accept': 'application/json, text/plain, */*',
+                      'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
+                      'classroom-id': str(classroom_id),
+                      'content-type': 'application/json;charset=UTF-8',
+                      'cookie': COOKIE,                     
+                      'origin': 'https://www.yuketang.cn',
+                      'priority': 'u=1, i',
+                      'referer': 'https://www.yuketang.cn/bindmobile/student/forum',
+                      'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                      'sec-ch-ua-mobile': '?0',
+                      'sec-ch-ua-platform': '"Windows"',
+                      'sec-fetch-dest': 'empty',
+                      'sec-fetch-mode': 'cors',
+                      'sec-fetch-site': 'same-origin',
+                      'university-id': str(university_id),
+                      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
+                      'uv-id': str(university_id),
+                      'x-csrftoken': csrftoken,
+                      'xt-agent': 'web',
+                      'xtbz': 'ykt',
+                           }
+               submit_discussion_url='https://www.yuketang.cn/v/discussion/v2/comment/'
+               submit_discussion_json_data = {
+                      'to_user': user_id,
+                      'topic_id': discuss_id,
+                      'content': {
+                      'text': words,
+                      'upload_images': [],
+                      },
+                        }
+               submit_discussion= requests.post(url=submit_discussion_url,headers=submit_discussion_headers,json=submit_discussion_json_data)  #提交评论
+               logger.info("提交评论"+words+"成功？"+str(submit_discussion.json()['success']))
                         
          
    
