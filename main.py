@@ -9,7 +9,7 @@ from loguru import logger
 
 COOKIE=''
 csrftoken=''
-words='通过学习本期的课程，我对产生了深刻的了解，以下是我的观点：1.'
+words='非常好，我学到了很多'
 logger.add("loguru.log")
 
 if __name__=='__main__':
